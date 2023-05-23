@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         config:
-        - { os: windows-latest, gen: "Visual Studio 17 2022", gen_short: "vs17_2022", arch: [ "x64", "Win32" ] }
+        - { os: windows-latest, gen: "Visual Studio 17 2022", gen_short: "vs17_2022", arch: "x64" }
         - { os: ubuntu-latest, gen: "Ninja", gen_short: "ninja", arch: "x86_64" }
     runs-on: ${{ matrix.config.os }}
     steps:
