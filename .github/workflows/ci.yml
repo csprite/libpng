@@ -9,8 +9,11 @@ jobs:
     strategy:
       matrix:
         config:
-        - { os: windows-latest, gen: "Visual Studio 17 2022", gen_short: "vs17_2022", arch: [ "x64", "Win32" ] }
-        - { os: ubuntu-latest, gen: "Ninja", gen_short: "ninja", arch: "x86_64" }
+        - { os: windows-latest, arch: "x64"    }
+        - { os: windows-latest, arch: "Win32"  }
+        - { os: macos-12,   arch: "x86_64" }
+        - { os: macos-12,   arch: "arm64"  }
+        - { os: ubuntu-latest,  arch: "x86_64" }
 
     runs-on: ${{ matrix.config.os }}
     steps:
@@ -18,24 +21,53 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Install Deps For Ubuntu
+    - name: Install Deps (MacOS Specific)
+      if: matrix.config.os == 'macos-latest'
+      run: |
+        formulaResult=$(brew --cache --bottle-tag=${{ matrix.config.arch }}_monterey zlib)
+        brew fetch --force --bottle-tag=${{ matrix.config.arch }}_monterey zlib
+        brew install $formulaResult
+        brew install ninja
+
+    - name: Install Deps (Linux Specific)
       if: matrix.config.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install ninja-build cmake zlib1g zlib1g-dev
 
-    - name: Build
+    - name: Generate Project Files (Windows Specific)
+      if: matrix.config.os == 'windows-latest'
       run: |
-        cmake -S . -B build -G ${{ matrix.config.gen }} -A ${{ matrix.config.arch }} \
+        cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.config.arch }} \
           -DCMAKE_INSTALL_PREFIX=./out/ -DCMAKE_BUILD_TYPE=Release \
           -DPNG_TESTS=OFF -DPNG_SHARED=ON -DPNG_STATIC=ON \
           -DPNG_EXECUTABLES=OFF -DPNG_HARDWARE_OPTIMIZATIONS=ON
+
+    - name: Generate Project Files (MacOS Specific)
+      if: matrix.config.os == 'macos-latest'
+      run: |
+        cmake -S . -B build -G "Xcode" \
+          -DCMAKE_INSTALL_PREFIX=./out/ -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_OSX_ARCHITECTURES=${{ matrix.config.arch }} \
+          -DPNG_TESTS=OFF -DPNG_SHARED=ON -DPNG_STATIC=ON \
+          -DPNG_EXECUTABLES=OFF -DPNG_HARDWARE_OPTIMIZATIONS=ON
+
+    - name: Generate Project Files (Linux Specific)
+      if: matrix.config.os == 'ubuntu-latest'
+      run: |
+        cmake -S . -B build -G "Ninja" \
+          -DCMAKE_INSTALL_PREFIX=./out/ -DCMAKE_BUILD_TYPE=Release \
+          -DPNG_TESTS=OFF -DPNG_SHARED=ON -DPNG_STATIC=ON \
+          -DPNG_EXECUTABLES=OFF -DPNG_HARDWARE_OPTIMIZATIONS=ON
+
+    - name: Build
+      run: |
         cmake --build build/ --parallel 4
         cmake --install build/ --strip
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: ${{ matrix.config.os }}-${{ matrix.config.arch }}-${{ matrix.config.gen_short }}
+        name: ${{ matrix.config.os }}-${{ matrix.config.arch }}
         path: ./out/
         if-no-files-found: error
