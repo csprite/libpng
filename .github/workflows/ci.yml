@@ -24,6 +24,7 @@ jobs:
     - name: Install Deps (MacOS Specific)
       if: matrix.config.os == 'macos-12'
       run: |
+        brew list zlib && brew uninstall zlib
         formulaResult=$(brew --cache --bottle-tag=${{ matrix.config.arch }}_monterey zlib)
         brew fetch --force --bottle-tag=${{ matrix.config.arch }}_monterey zlib
         brew install $formulaResult
