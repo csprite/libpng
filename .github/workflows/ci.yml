@@ -1,0 +1,33 @@
+name: ci
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        config:
+        - { os: windows-latest, gen: "Visual Studio 17 2022", gen_short: "vs17_2022", arch: [ "x64", "Win32" ] }
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
+
+    - name: Build
+      run: |
+        cmake -S . -B build -G ${{ matrix.config.gen }} -A ${{ matrix.config.arch }} \
+          -DCMAKE_INSTALL_PREFIX=./out/ -DCMAKE_BUILD_TYPE=Release \
+          -DPNG_TESTS=OFF -DPNG_SHARED=ON -DPNG_STATIC=ON \
+          -DPNG_EXECUTABLES=OFF -DPNG_HARDWARE_OPTIMIZATIONS=ON
+        cmake --build build/ --parallel 4
+        cmake --install build/ --strip
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: windows-${{ matrix.config.arch }}-${{ matrix.config.gen_short }}
+        path: ./out/
+        if-no-files-found: error
