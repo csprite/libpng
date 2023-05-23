@@ -10,11 +10,18 @@ jobs:
       matrix:
         config:
         - { os: windows-latest, gen: "Visual Studio 17 2022", gen_short: "vs17_2022", arch: [ "x64", "Win32" ] }
-    runs-on: ubuntu-latest
+        - { os: ubuntu-latest, gen: "Ninja", gen_short: "ninja", arch: "x86_64" }
+    runs-on: ${{ matrix.config.os }}
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
+
+    - name: Install Deps For Ubuntu
+      if: matrix.config.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install ninja-build cmake zlib1g zlib1g-dev
 
     - name: Build
       run: |
@@ -28,6 +35,6 @@ jobs:
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
       with:
-        name: windows-${{ matrix.config.arch }}-${{ matrix.config.gen_short }}
+        name: ${{ matrix.config.os }}-${{ matrix.config.arch }}-${{ matrix.config.gen_short }}
         path: ./out/
         if-no-files-found: error
