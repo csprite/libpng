@@ -11,8 +11,8 @@ jobs:
         config:
         - { os: windows-latest, arch: "x64"    }
         - { os: windows-latest, arch: "Win32"  }
-        - { os: macos-12,   arch: "x86_64" }
-        - { os: macos-12,   arch: "arm64"  }
+        - { os: macos-12,   arch: "x86_64"     }
+        - { os: macos-12,   arch: "arm64"      }
         - { os: ubuntu-latest,  arch: "x86_64" }
 
     runs-on: ${{ matrix.config.os }}
@@ -22,7 +22,7 @@ jobs:
         submodules: recursive
 
     - name: Install Deps (MacOS Specific)
-      if: matrix.config.os == 'macos-latest'
+      if: matrix.config.os == 'macos-12'
       run: |
         formulaResult=$(brew --cache --bottle-tag=${{ matrix.config.arch }}_monterey zlib)
         brew fetch --force --bottle-tag=${{ matrix.config.arch }}_monterey zlib
@@ -44,7 +44,7 @@ jobs:
           -DPNG_EXECUTABLES=OFF -DPNG_HARDWARE_OPTIMIZATIONS=ON
 
     - name: Generate Project Files (MacOS Specific)
-      if: matrix.config.os == 'macos-latest'
+      if: matrix.config.os == 'macos-12'
       run: |
         cmake -S . -B build -G "Xcode" \
           -DCMAKE_INSTALL_PREFIX=./out/ -DCMAKE_BUILD_TYPE=Release \
