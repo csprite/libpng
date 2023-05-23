@@ -44,7 +44,7 @@ jobs:
     - name: Generate Project Files (MacOS Specific)
       if: matrix.config.os == 'macos-12'
       run: |
-        cmake -S . -B build -G "Xcode" \
+        cmake -S . -B build -G "Ninja" \
           -DCMAKE_INSTALL_PREFIX=./out/ -DCMAKE_BUILD_TYPE=Release \
           -DCMAKE_OSX_ARCHITECTURES=${{ matrix.config.arch }} \
           -DPNG_TESTS=OFF -DPNG_SHARED=ON -DPNG_STATIC=ON \
