@@ -1,5 +1,14 @@
 ## libpng v1.6.39
 
+```bash
+cmake -S . -B build -G Ninja -L \
+  -DCMAKE_INSTALL_PREFIX=./out/ -DCMAKE_BUILD_TYPE=Release \
+  -DPNG_TESTS=OFF -DPNG_SHARED=ON -DPNG_STATIC=ON \
+  -DPNG_EXECUTABLES=OFF -DPNG_HARDWARE_OPTIMIZATIONS=ON
+cmake --build build/ --parallel 4
+cmake --install build/ --strip
+```
+
 ```
 README for libpng version 1.6.39
 ================================

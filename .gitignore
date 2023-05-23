@@ -75,4 +75,5 @@ timepng
 pngout.png
 
 # Libpng CI artifacts
+build/
 out/
