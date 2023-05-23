@@ -26,9 +26,10 @@ jobs:
       run: |
         git clone https://github.com/madler/zlib/ -b v1.2.13 --recursive
         cd zlib
-        cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.config.arch}} -DCMAKE_BUILD_TYPE=Release
+        cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.config.arch}} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="out/"
         cmake --build build/ --parallel 4 --config Release
-        cmake --install build/ --strip --config Release --prefix ../out/
+        cmake --install build/ --strip --config Release --prefix "out/"
+        mv out/ ../out/
 
     - name: Install Deps (MacOS Specific)
       if: matrix.config.os == 'macos-12'
@@ -48,7 +49,7 @@ jobs:
     - name: Generate Project Files (Windows Specific)
       if: matrix.config.os == 'windows-latest'
       run: |
-        cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.config.arch }} -DCMAKE_INSTALL_PREFIX=./out/ -DCMAKE_BUILD_TYPE=Release -DPNG_TESTS=OFF -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_EXECUTABLES=OFF -DPNG_HARDWARE_OPTIMIZATIONS=ON -DPNG_BUILD_ZLIB=./out/
+        cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.config.arch }} -DCMAKE_INSTALL_PREFIX="out/" -DCMAKE_BUILD_TYPE=Release -DPNG_TESTS=OFF -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_EXECUTABLES=OFF -DPNG_HARDWARE_OPTIMIZATIONS=ON -DPNG_BUILD_ZLIB="out/"
 
     - name: Generate Project Files (MacOS Specific)
       if: matrix.config.os == 'macos-12'
@@ -73,7 +74,7 @@ jobs:
 
     - name: Install
       run: |
-        cmake --install build/ --strip --config Release
+        cmake --install build/ --strip --config Release --prefix "out/"
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v2
