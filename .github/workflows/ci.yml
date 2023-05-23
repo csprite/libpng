@@ -9,11 +9,11 @@ jobs:
     strategy:
       matrix:
         config:
-        - { os: windows-latest, arch: "x64"    }
-        - { os: windows-latest, arch: "Win32"  }
-        - { os: macos-12,   arch: "x86_64"     }
-        - { os: macos-12,   arch: "arm64"      }
-        - { os: ubuntu-latest,  arch: "x86_64" }
+        - { os: windows-2022, arch: "x64"    }
+        - { os: windows-2022, arch: "Win32"  }
+        - { os: macos-12,     arch: "x86_64" }
+        - { os: macos-12,     arch: "arm64"  }
+        - { os: ubuntu-22.04, arch: "x86_64" }
 
     runs-on: ${{ matrix.config.os }}
     steps:
@@ -22,7 +22,7 @@ jobs:
         submodules: recursive
 
     - name: Install Deps (Windows Specific)
-      if: matrix.config.os == 'windows-latest'
+      if: matrix.config.os == 'windows-2022'
       run: |
         git clone https://github.com/madler/zlib/ -b v1.2.13 --recursive
         cd zlib
@@ -40,13 +40,13 @@ jobs:
         brew install ninja
 
     - name: Install Deps (Linux Specific)
-      if: matrix.config.os == 'ubuntu-latest'
+      if: matrix.config.os == 'ubuntu-22.04'
       run: |
         sudo apt-get update
         sudo apt-get install ninja-build cmake zlib1g zlib1g-dev
 
     - name: Generate Project Files (Windows Specific)
-      if: matrix.config.os == 'windows-latest'
+      if: matrix.config.os == 'windows-2022'
       run: |
         cmake -S . -B build -G "Visual Studio 17 2022" -A ${{ matrix.config.arch }} -DCMAKE_INSTALL_PREFIX="out/" -DCMAKE_BUILD_TYPE=Release -DPNG_TESTS=OFF -DPNG_SHARED=ON -DPNG_STATIC=ON -DPNG_EXECUTABLES=OFF -DPNG_HARDWARE_OPTIMIZATIONS=ON
 
@@ -60,7 +60,7 @@ jobs:
           -DPNG_EXECUTABLES=OFF -DPNG_HARDWARE_OPTIMIZATIONS=ON
 
     - name: Generate Project Files (Linux Specific)
-      if: matrix.config.os == 'ubuntu-latest'
+      if: matrix.config.os == 'ubuntu-22.04'
       run: |
         cmake -S . -B build -G "Ninja" \
           -DCMAKE_INSTALL_PREFIX=./out/ -DCMAKE_BUILD_TYPE=Release \
@@ -81,3 +81,36 @@ jobs:
         name: ${{ matrix.config.os }}-${{ matrix.config.arch }}
         path: ./out/
         if-no-files-found: error
+
+  create-release:
+    needs: [ build ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: |
+      github.event_name == 'push' ||
+      github.event.pull_request.merged == true
+    steps:
+    - name: Download Builds
+      uses: actions/download-artifact@v3
+      with:
+        path: ./
+
+    - name: Archive
+      run: |
+        folders=(windows-2022-x64 windows-2022-Win32 macos-12-x86_64 macos-12-arm64 ubuntu-22.04-x86_64)
+        for folder in "${folders[@]}"
+        do
+          zip -r $folder.zip $folder
+        done
+
+    - uses: ncipollo/release-action@v1
+      with:
+        name: "libpng v1.6.39"
+        tag: "v1.6.39"
+        commit: "master"
+        prerelease: false
+        allowUpdates: true
+        generateReleaseNotes: false
+        artifactErrorsFailBuild: true
+        artifacts: ./*.zip
