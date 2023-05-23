@@ -63,6 +63,14 @@ jobs:
     - name: Build
       run: |
         cmake --build build/ --parallel 4
+
+    - name: Pre-Install (MacOS Specific)
+      if: matrix.config.os == 'macos-12'
+      run: |
+        cp ./build/Release/libpng.dylib ./build/Release/libpng16.16.39.0.dylib
+
+    - name: Install
+      run: |
         cmake --install build/ --strip
 
     - name: Upload Artifacts
